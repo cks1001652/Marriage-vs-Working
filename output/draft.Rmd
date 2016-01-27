@@ -9,7 +9,7 @@ output: html_document
 
 Libraries needed:  
 ```{r message = FALSE}
-library(repmis)
+library(repmis) # for reading in data from Dropbox
 library(data.table)
 library(dplyr)
 ```
