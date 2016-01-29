@@ -20,14 +20,14 @@ filenames <- list(pusa_filename = "ss13pusa.csv", pusb_filename = "ss13pusb.csv"
                   husa_filename = "ss13husa.csv", husb_filename = "ss13husb.csv")
 keys <- list(pusa_key = "2bag8q8jp61dsux", pusb_key = "dvvpzk7qj6r5nvb", 
              husa_key = "5uubarlztxpw947", husb_key = "xjzc0noi23zv20j")
-columns <- c("AGEP", "CIT", "ENG", "SCHL", "ST", "LANP") # change this to whatever columns you need
+pcolumns <- c("AGEP", "CIT", "ENG", "SCHL", "ST", "LANP") # change this to whatever columns we are using
 
 # you can pass fread() arguments to source_DropboxData, including "select = ", to load in subsets right away
 # the cache = TRUE argument will cache the data on your machine so you only need to download from Dropbox once
 pusa <- source_DropboxData(file = filenames$pusa_filename, key = keys$pusa_key, 
-                           sep = ",", header = TRUE, cache = TRUE, select = columns)
+                           sep = ",", header = TRUE, cache = TRUE, select = pcolumns)
 pusb <- source_DropboxData(file = filenames$pusb_filename, key = keys$pusb_key, 
-                           sep = ",", header = TRUE, cache = TRUE, select = columns)
+                           sep = ",", header = TRUE, cache = TRUE, select = pcolumns)
 
 # pusa and pusb have 25 states each, so we row bind them to get the complete data
 pus <- rbind(pusa, pusb)
