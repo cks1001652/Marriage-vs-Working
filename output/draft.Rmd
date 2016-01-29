@@ -10,7 +10,6 @@ output: html_document
 Libraries needed:  
 ```{r message = FALSE}
 library(repmis) # for reading in data from Dropbox
-library(data.table)
 library(dplyr)
 ```
 
@@ -21,19 +20,21 @@ filenames <- list(pusa_filename = "ss13pusa.csv", pusb_filename = "ss13pusb.csv"
                   husa_filename = "ss13husa.csv", husb_filename = "ss13husb.csv")
 keys <- list(pusa_key = "2bag8q8jp61dsux", pusb_key = "dvvpzk7qj6r5nvb", 
              husa_key = "5uubarlztxpw947", husb_key = "xjzc0noi23zv20j")
+columns <- c("AGEP", "CIT", "ENG", "SCHL", "ST", "LANP") # change this to whatever columns you need
 
 # you can pass fread() arguments to source_DropboxData, including "select = ", to load in subsets right away
+# the cache = TRUE argument will cache the data on your machine so you only need to download from Dropbox once
 pusa <- source_DropboxData(file = filenames$pusa_filename, key = keys$pusa_key, 
-                           sep = ",", header = TRUE, cache = TRUE)
+                           sep = ",", header = TRUE, cache = TRUE, select = columns)
 pusb <- source_DropboxData(file = filenames$pusb_filename, key = keys$pusb_key, 
-                           sep = ",", header = TRUE, cache = TRUE)
+                           sep = ",", header = TRUE, cache = TRUE, select = columns)
 
 # pusa and pusb have 25 states each, so we row bind them to get the complete data
 pus <- rbind(pusa, pusb)
 rm(pusa, pusb)
 
 # subset the data according to the variables we're focusing on and write the subset to a new file
-pus_subset <- pus %>% filter(AGEP > 5) %>% select(CIT, ENG, SCHL, ST, LANP)
+pus_subset <- pus %>% filter(AGEP > 5)
 rm(pus)
 saveRDS(pus_subset, file = "output/pus_subset.RDS")
 ```
@@ -63,3 +64,8 @@ plot(above_5$CIT[above_5$ENG == "Not at all"],
      main = "Citizenship status of those who don't speak any English")
 ```
 
+Merge in state names:
+```{r}
+statenames <- read.csv("data/statenames.csv")
+above_5 <- left_join(above_5, statenames, by = ("ST" = "code"))
+```
