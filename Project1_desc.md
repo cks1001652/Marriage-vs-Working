@@ -1,7 +1,7 @@
 ### W4249 Spring 2016 Applied Data Science
 #### Project 1 Analysis of *American Community Survey*
 
-In this project, we will create a data analysis using the 2013 American Community Survey (ACS) hosted on the data science competition website [Kaggle](https://www.kaggle.com/census/2013-american-community-survey#description). Recently Kaggle has enabled *Kaggle Scripts* that allow users to showcase their analysis in a reproducible way. For this particular data set, there are a total of 710 scripts submitted as of January 16, 2016. 
+In this project, we will create a data analysis using the 2013 American Community Survey (ACS) hosted on the data science competition website [Kaggle](https://www.kaggle.com/census/2013-american-community-survey#description). Recently Kaggle has enabled *Kaggle Scripts* that allow users to showcase their analysis in a reproducible way. For this particular data set, there are a total of 710 scripts submitted as of January 16, 2016 
 
 ##### Challenge
 For this project, I invite you to browse scripts that interest you and find inspiration to write your own Kaggle script on this data set. 
