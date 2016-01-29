@@ -1,7 +1,7 @@
 ---
 title: "ACS Script - currently untitled"
 author: "STAT W4249 Cycle 1-7"
-date: "January 27, 2016"
+date: "January 29, 2016"
 output: html_document
 ---
 
@@ -21,6 +21,8 @@ filenames <- list(pusa_filename = "ss13pusa.csv", pusb_filename = "ss13pusb.csv"
                   husa_filename = "ss13husa.csv", husb_filename = "ss13husb.csv")
 keys <- list(pusa_key = "2bag8q8jp61dsux", pusb_key = "dvvpzk7qj6r5nvb", 
              husa_key = "5uubarlztxpw947", husb_key = "xjzc0noi23zv20j")
+
+# you can pass fread() arguments to source_DropboxData, including "select = ", to load in subsets right away
 pusa <- source_DropboxData(file = filenames$pusa_filename, key = keys$pusa_key, 
                            sep = ",", header = TRUE, cache = TRUE)
 pusb <- source_DropboxData(file = filenames$pusb_filename, key = keys$pusb_key, 
@@ -47,7 +49,7 @@ Convert CIT and ENG to factor variables and rename factor labels:
 ```{r}
 above_5$CIT <- as.factor(above_5$CIT)
 levels(above_5$CIT) <- c("Born in U.S.", "Born in U.S. territory", "Born abroad of U.S. parents", 
-                     "Naturalized", "Not citizen")
+                         "Naturalized", "Not citizen")
 plot(above_5$CIT)
 
 above_5$ENG <- as.factor(above_5$ENG)
