@@ -4,14 +4,16 @@
 #####Variables interested in:
 
 1
-
-	MAR          
-    Marital status
-           1 .Married
-           2 .Widowed
-           3 .Divorced
-           4 .Separated
-           5 .Never married or under 15 years old
+	
+	MSP        
+    Married, spouse present/spouse absent
+           b .N/A (age less than 15 years)
+           1 .Now married, spouse present
+           2 .Now married, spouse absent
+           3 .Widowed
+           4 .Divorced
+           5 .Separated
+           6 .Never married
 
 2
 
@@ -50,7 +52,19 @@
            22 .Master's degree
            23 .Professional degree beyond a bachelor's degree
            24 .Doctorate degree
-           
-           
+4
+
+	AGEP     
+    Age
+               00 .Under 1 year    
+           01..99 .1 to 99 years (Top-coded***)           
 ###Some ideas:
-1.Remove all the people who are under the minimal age of getting married approved by [US Marriage laws](http://www.usmarriagelaws.com). (Sources: [Age of marriage in the United States](https://en.wikipedia.org/wiki/Age_of_marriage_in_the_United_States) ). Since most of the states allow a indivual to get married at 16 years old, we remove all the individuals who are under 16.
+1. Remove all the people who are under the minimal age of getting married approved by [US Marriage laws](http://www.usmarriagelaws.com). (Sources: [Age of marriage in the United States](https://en.wikipedia.org/wiki/Age_of_marriage_in_the_United_States) ). Since most of the states allow a indivual to get married at 16 years old, we remove all the individuals who are under 16(MSP=NA).
+2. compare the marry rate and single rate in different states.
+3. compare the average income of married people and unmarried people nation wide and state wide.
+4. compare the average education level of married people and unmarried people across the nation and state
+5. compare the average age of married people and single people
+6. should we regard widow and separate as single.
+7. single is not unmarried, there are other states like widow and separaate, but we are not interested in that.
+8. 
+
