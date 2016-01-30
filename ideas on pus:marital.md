@@ -4,6 +4,7 @@
 #####Variables interested in:
 
 1
+<<<<<<< HEAD
 	
 	MSP        
     Married, spouse present/spouse absent
@@ -14,6 +15,16 @@
            4 .Divorced
            5 .Separated
            6 .Never married
+=======
+
+	MAR          
+    Marital status
+           1 .Married
+           2 .Widowed
+           3 .Divorced
+           4 .Separated
+           5 .Never married or under 15 years old
+>>>>>>> master
 
 2
 
@@ -52,6 +63,7 @@
            22 .Master's degree
            23 .Professional degree beyond a bachelor's degree
            24 .Doctorate degree
+<<<<<<< HEAD
 4
 
 	AGEP     
@@ -68,3 +80,9 @@
 7. single is not unmarried, there are other states like widow and separaate, but we are not interested in that.
 8. 
 
+=======
+           
+           
+###Some ideas:
+1.Remove all the people who are under the minimal age of getting married approved by [US Marriage laws](http://www.usmarriagelaws.com). (Sources: [Age of marriage in the United States](https://en.wikipedia.org/wiki/Age_of_marriage_in_the_United_States) ). Since most of the states allow a indivual to get married at 16 years old, we remove all the individuals who are under 16.
+>>>>>>> master
