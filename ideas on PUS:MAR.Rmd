@@ -1,3 +1,13 @@
+---
+title: "Ideas on PUS/MAR"
+author: "lleiou"
+date: "January 30, 2016"
+output: pdf_document
+---
+
+
+
+
 [PUS]Investigation on the Relationship Between the Individual Incomes and Marital Status
 ------------
 
@@ -66,5 +76,96 @@
 5. compare the average age of married people and single people
 6. should we regard widow and separate as single.
 7. single is not unmarried, there are other states like widow and separaate, but we are not interested in that.
-8. 
+
+
+Here's the codes that I wrote till now, plots need to be added.
+---
+
+
+
+
+```{r message=FALSE}
+library("dplyr")
+library("data.table")
+
+#getting the data frame from household data
+colsToKeep<-c("ST","FINCP","HINCP","FES","HHT")
+
+husa <- fread("ss13husa.csv", select=colsToKeep)
+husb <- fread("ss13husb.csv", select=colsToKeep)
+
+hus <- rbind(husa,husb) #This is a list
+hus <- as.data.frame(hus) #Transform a list to a data frame
+```
+
+getting the data frame from population data
+```{R message}
+colsToKeep<-c("ST","SCHL","MSP","WAGP","AGEP")
+
+pusa <- fread("ss13pusa.csv", select=colsToKeep)
+pusb <- fread("ss13pusb.csv", select=colsToKeep)
+
+pus <- rbind(pusa,pusb)
+pus <- as.data.frame(pus)
+
+#####save the file
+save(pus, file="pus_selected_cols.RData")
+#####
+
+load("pus_selected_cols.RData")
+
+```
+
+subset the data according to the variables we're focusing on 
+caluculate the sum of married people and single people
+```{r message=False}
+pus <-tbl_df(pus)
+```
+remove NA in MSP column
+and calculate the sum of the remaining individual
+```{r message=False}
+pus <- pus %>%
+           na.omit(MSP)
+pus_sm<-pus %>%
+          #filter(MSP %in% c(1,6))%>%
+          summarize(sum=n())
+```
+
+calculate the sum of married people and unmarried people
+Then calculate the married/unmarried rate across the country
+
+
+```{r message=False}
+pus_df <-pus%>%    
+       filter(MSP %in% c(1,6))%>%
+       group_by(MSP) %>%
+       summarize(count=n())%>%
+       mutate(percent=count/pus_sum$sum)
+```
+
+calculate the married rate and single rate in every state
+
+```{r message=False}
+StatePop<-pus %>%
+          group_by(ST)%>%
+          summarize(count=n())
+
+StateMar<-pus%>%
+          filter(MSP==1)%>%
+          group_by(ST)%>%
+          summarize(count=n())
+
+StateSin<-pus%>%
+          filter(MSP==6)%>%
+          group_by(ST)%>%
+          summarize(count=n())
+
+StateMarRate<-StateMar%>%
+              summarize(StateMar$count/StatePop$count)
+
+StateSinRate<-StateSin%>%
+              summarize(StateSin/StatePop)
+  ```
+  
+
 
