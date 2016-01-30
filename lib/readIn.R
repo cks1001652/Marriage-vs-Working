@@ -2,9 +2,10 @@
 #'Read in Dataset 
 #'@par:
 #'colsToKeep : vector of strings / parameters to be kept
-#'reRead     : Boolean 
+#'reRead     : Boolean / TRUE if reread in raw data needed
 #'pathA      : string / path of "ss13pusa.csv"
 #'pathB      : string / path of "ss13pusb.csv"
+#'
 
 readIn = function(reRead, colsToKeep, pathA, pathB){
   if(reRead == TRUE){
