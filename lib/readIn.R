@@ -10,7 +10,7 @@
 readIn = function(reRead, colsToKeep, pathA, pathB){
   if(reRead == TRUE){
     popDataA = fread(pathA, select = colsToKeep)
-    popDataA = fread(pathB, select = colsToKeep)
+    popDataB = fread(pathB, select = colsToKeep)
     popData = rbind(popDataA, popDataB)
     rm(popDataA, popDataB)
     save(popData, file = "popData.RData")
