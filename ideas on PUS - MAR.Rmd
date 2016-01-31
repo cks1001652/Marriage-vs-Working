@@ -122,7 +122,6 @@ Convert state number to state abbreviation
 ST.anno <- read.csv("statenames.csv", Header=T)
 colnames(ST.anno)[1] <- "ST"
 hus <- left_join(ST.anno,hus, by = "ST")
-select(sample_n(hus, 5), ST, name, abbr)
 
 ST.anno <- read.csv("statenames.csv", header=T)
 colnames(ST.anno)[1] <- "ST"
