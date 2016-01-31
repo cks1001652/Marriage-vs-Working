@@ -23,7 +23,6 @@ library("choroplethrMaps")
 ```{r}
 source("../lib/readIn.R")
 hus <- readIn_house(T,c("ST","FES","FINCP"),"../../ss13husa.csv","../../ss13husb.csv")
-
 ```
 
 There are a total of 1,476,313 households in the dataset. In this analysis we focus on a subset of the households via the variable __FES__ (Family Type and Employment Status), looking only at married-couple families.  
@@ -32,7 +31,7 @@ table(hus$FES, useNA = "ifany")
 sum(table(hus$FES)[1:4])
 ```
 
-There are 666,947 missing values in __FES__, and our subset will have 617,090 households.  
+There are 666,947 missing values in __FES__, and our subset will have 617,090 families.  
 
 ```{r}
 hus <- tbl_df(hus)
@@ -50,41 +49,77 @@ fescodes <- fread(fescode)
 
 fesnumbers <- summarise(hus,count=n())
 fesnumbers <- left_join(fesnumbers,fescodes,by.x=c("FES"))
+fesnumbers <- mutate(fesnumbers, percent = (count / sum(fesnumbers$count)) * 100)
 Types <- factor(fesnumbers$MarriedFamilyEmployType,levels=unique(fesnumbers$MarriedFamilyEmployType))
 ````
-## Exploring the basic statistics
-````{r}
-options(scipen = 3) # display digits instead of scientific notation
-ggplot(fesnumbers, aes(x= Types , y=fesnumbers$count, fill=Types)) +                        
-     geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
-     ylab("Number of People") + 
-     xlab("Labor Force Participation") + 
-     ggtitle("Labor Force Participation of Married Families in the US") +
-     theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
-     panel.background = element_rect(fill = 'white')) +
-     scale_y_discrete(breaks = seq(0, 300000, 50000))
-````
+
+## Descriptive Statistics
 
 ````{r}
-summary(hus$FINCP)
+options(scipen = 999) # display digits instead of scientific notation
+ggplot(fesnumbers, aes(x = Types, y = fesnumbers$percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       ylab("% of Households") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Households in the US") +
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10))
 ````
-The median family income is 77000 dollars. We use this as bench line. We want to see the percentage under each type of family who has family income more than 77000 which is approxiamatly middle class.
+
+Almost 50% of married-couple households have both husband and wife in the labor force, compared to 22% with only the husband in the labor force, 8.5% with only the wife in the labor force, and 20% with neither the husband nor the wife in the labor force, which may indicate retired couples.  
+
+````{r}
+hus$FINCP_ADJ <- hus$FINCP * 1.007549 # adjusts reported income to 2013 dollars
+summary(hus$FINCP_ADJ)
+````
+
+The median family income is $77,580. (This is different from household income, where a household might consist of multiple families or multiple unrelated people living together.) Is there a difference in labor force participation between households at or above median income vs. below? Under the unlikely theory that family income has nothing to do with married-couple labor force participation, we would expect the proportion of each category for the "at or above median" vs. "below median" subgroups to be roughly the same as the general proportion.  
+
 ````{r,message=F}
-medianper <- hus	%>%
-			filter(FINCP>=77000)		%>%
-			group_by(FES)	%>%
-			summarise(count	=	n())		%>%
-			mutate(Percent	=	count/fesnumbers$count*100)
+abovemedian <- hus %>% filter(FINCP_ADJ >= 77000) %>% group_by(FES) %>% summarise(count = n())
+abovemedian <- left_join(abovemedian, fescodes, by.x=c("FES"))
+abovemedian <- mutate(abovemedian, percent = (count / sum(abovemedian$count)) * 100)
+
+belowmedian <- hus %>% filter(FINCP_ADJ < 77000) %>% group_by(FES) %>% summarise(count = n())
+belowmedian <- left_join(belowmedian, fescodes, by.x=c("FES"))
+belowmedian <- mutate(belowmedian, percent = (count / sum(belowmedian$count)) * 100)
 ````
+
 ````{r,message=TRUE}
-ggplot(medianper, aes(x= Types , y=medianper$Percent, fill= Types)) +                        
-       geom_bar(stat="identity") + scale_fill_hue(l=80) +
-       ylab("Percent %") + 
-       xlab("Employment Status") + ggtitle("Percentages of different Employment Status")+
-       theme(axis.text.x = element_text(angle = 10, hjust = 0.5),
-       panel.background = element_rect(fill = 'white' ))
+ggplot(abovemedian, aes(x = Types , y = abovemedian$percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       geom_segment(aes(x = 0.5, y = fesnumbers$percent[1], xend = 1.5, yend = fesnumbers$percent[1])) +
+       geom_segment(aes(x = 1.5, y = fesnumbers$percent[2], xend = 2.5, yend = fesnumbers$percent[2])) +
+       geom_segment(aes(x = 2.5, y = fesnumbers$percent[3], xend = 3.5, yend = fesnumbers$percent[3])) +
+       geom_segment(aes(x = 3.5, y = fesnumbers$percent[4], xend = 4.5, yend = fesnumbers$percent[4])) +
+       ylab("Percentage") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Families above Median Income")+
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10)) +
+       annotate("text", x = 3.5, y = 50, label = "Black lines indicate percentages over") +
+       annotate("text", x = 3.5, y = 47, label = "all married-couple families")
+
+ggplot(belowmedian, aes(x = Types , y = belowmedian$percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       geom_segment(aes(x = 0.5, y = fesnumbers$percent[1], xend = 1.5, yend = fesnumbers$percent[1])) +
+       geom_segment(aes(x = 1.5, y = fesnumbers$percent[2], xend = 2.5, yend = fesnumbers$percent[2])) +
+       geom_segment(aes(x = 2.5, y = fesnumbers$percent[3], xend = 3.5, yend = fesnumbers$percent[3])) +
+       geom_segment(aes(x = 3.5, y = fesnumbers$percent[4], xend = 4.5, yend = fesnumbers$percent[4])) +
+       ylab("Percentage") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Families below Median Income")+
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10)) +
+       annotate("text", x = 3, y = 42, label = "Black lines indicate percentages over") +
+       annotate("text", x = 3, y = 39, label = "all married-couple families")
 ````
-We can see an interesting result comparing to the previous one that the married family with only wife in the labor force has absolute less numbers of people than the family who has only husband in the labor force, while showing almost the same percentage with more than 77000 family income. This could be investigated later.
+
+Comparing married-couple households at or above median income and married-couple households below median income, it appears that the biggest differences are in two-income vs no-income families. The percentage of single-earner families appears to be roughly the same in both groups, while there is a greater percentage of two-income families earning above median income and a greater percentage of no-income families earning below median income.  
+
 ````{r,echo=FALSE}
 stateCodeCSV = "ST,region
 001,alabama
