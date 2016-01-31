@@ -79,7 +79,7 @@ output: pdf_document
 
 
 Here's the codes that I wrote till now, plots need to be added.
----
+
 
 
 
@@ -115,6 +115,19 @@ save(pus, file="pus_selected_cols.RData")
 load("pus_selected_cols.RData")
 
 ```
+
+
+Convert state number to state abbreviation
+```{r message=F}
+ST.anno <- read.csv("statenames.csv", Header=T)
+colnames(ST.anno)[1] <- "ST"
+hus <- left_join(ST.anno,hus, by = "ST")
+
+ST.anno <- read.csv("statenames.csv", header=T)
+colnames(ST.anno)[1] <- "ST"
+pus <- left_join(pus, ST.anno, by = "ST")
+```
+
 
 subset the data according to the variables we're focusing on 
 caluculate the sum of married people and single people
