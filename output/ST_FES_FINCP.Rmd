@@ -17,12 +17,13 @@ library("dplyr")
 library("data.table")
 library("ggplot2")
 library("choroplethr")
+library("choroplethrMaps")
 ````
 
 ```{r}
-source("lib/readIn.R") # import readIn functions
+source("../lib/readIn.R")
+hus <- readIn_house(T,c("ST","FES","FINCP"),"../../ss13husa.csv","../../ss13husb.csv")
 
-# hus <- readIn(T,c("ST","FES","FINCP"),"/Users/cheeseloveicecream/Documents/columbia/W4249/ss13husa.csv","/Users/cheeseloveicecream/Documents/columbia/W4249/ss13husb.csv")
 ```
 
 There are a total of 1,476,313 households in the dataset. In this analysis we focus on a subset of the households via the variable __FES__ (Family Type and Employment Status), looking only at married-couple families.  
@@ -38,34 +39,38 @@ hus <- tbl_df(hus)
 hus <- hus %>% filter(FES %in% c(1:4)) %>% group_by(FES)
 ````
 
-# Visuliazation
+# Visualization
 ````{r, message=F}
 fescode <- "FES,MarriedFamilyEmployType
-1,Both in Labor Force
-2,Husband in Labor Force
-3,Wife in Labor Force
-4,Neither in Labor Force"
+              1,Both in Labor Force
+              2,Husband in Labor Force
+              3,Wife in Labor Force
+              4,Neither in Labor Force"
 fescodes <- fread(fescode)
 
-fesnumbers <- summarise(ds,count=n())
+fesnumbers <- summarise(hus,count=n())
 fesnumbers <- left_join(fesnumbers,fescodes,by.x=c("FES"))
 Types <- factor(fesnumbers$MarriedFamilyEmployType,levels=unique(fesnumbers$MarriedFamilyEmployType))
 ````
-## Exploraring the basic statistics
+## Exploring the basic statistics
 ````{r}
-ggplot(fesnumbers, aes(x= Types , y=fesnumbers$count, fill= Types)) +                        
-     geom_bar(stat="identity") + scale_fill_hue(l=50) +
-     ylab("Num of People") + 
-     xlab("Employment Status") + ggtitle("Comparing Enployment status of Married Family in the US") +
-     theme(axis.text.x = element_text(angle = 10, hjust = 0.5),
-     panel.background = element_rect(fill = 'white' ))
+options(scipen = 3) # display digits instead of scientific notation
+ggplot(fesnumbers, aes(x= Types , y=fesnumbers$count, fill=Types)) +                        
+     geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+     ylab("Number of People") + 
+     xlab("Labor Force Participation") + 
+     ggtitle("Labor Force Participation of Married Families in the US") +
+     theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+     panel.background = element_rect(fill = 'white')) +
+     scale_y_discrete(breaks = seq(0, 300000, 50000))
 ````
+
 ````{r}
-summary(ds$FINCP)
+summary(hus$FINCP)
 ````
 The median family income is 77000 dollars. We use this as bench line. We want to see the percentage under each type of family who has family income more than 77000 which is approxiamatly middle class.
 ````{r,message=F}
-medianper <- ds	%>%
+medianper <- hus	%>%
 			filter(FINCP>=77000)		%>%
 			group_by(FES)	%>%
 			summarise(count	=	n())		%>%
@@ -141,13 +146,13 @@ stateCodes <- fread(stateCodeCSV)
 This map shows percentage of family which neither of the member is in the labor force while having more than 121200 dollars (3rd quantile) family income. 
 ````{r}
 
-stateTotalBoth <- ds	%>%
+stateTotalBoth <- hus	%>%
 				  filter(FES==4)		%>%
 				  group_by(ST)	%>%
 				  summarise(count=n())
 				  
 
-medianBoth <- ds	%>%
+medianBoth <- hus	%>%
 				filter(FES==4,FINCP>= 121200)	%>%
 				group_by(ST)		%>%
 				summarise(count=n())

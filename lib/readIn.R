@@ -1,3 +1,5 @@
+library(data.table)
+
 #'
 #'Read in Population Dataset 
 #'@par:
