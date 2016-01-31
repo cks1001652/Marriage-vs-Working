@@ -1,7 +1,7 @@
 ---
 title: "Draft Analysis for Married Family & Family Income"
-author: "Yicheng Wang"
-date: "Saturday, January 30, 2016"
+author: "Yicheng Wang, Arnold Lau"
+date: "January 31, 2016"
 output:
   html_document:
     fig_width: 8
@@ -11,12 +11,8 @@ output:
     toc: yes
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
 # Preparation
-````{r,message=FALSE}
+````{r, message=FALSE}
 library("dplyr")
 library("data.table")
 library("ggplot2")
@@ -24,7 +20,7 @@ library("choroplethr")
 ````
 
 # Reading data
-````{r,message=FALSE}
+````{r, message=FALSE}
 readIn = function(reRead, colsToKeep, pathA, pathB){
   if(reRead == TRUE){
     popDataA = fread(pathA, select = colsToKeep)
