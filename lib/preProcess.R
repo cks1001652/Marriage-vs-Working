@@ -9,15 +9,13 @@
 #'PARG      : vector / parameter to group by
 #'
 
-preProcess = function(populData, filter, PARF, criteria, group, PARG){
+preProcess = function(populData, filter = F, PARF = NULL, criteria = NULL, group = F, PARG = NULL){
   populData = tbl_df(populData)
-  ds = populData %>%
-    na.omit()
   if(filter){
-    filter(ds, PARF %in% criteria)
+    filter(populData, PARF %in% criteria)
   }
   if(group){
-    group_by(ds, PARG)
+    group_by(populData, PARG)
   }
-  return(ds)
+  return(populData)
 }
