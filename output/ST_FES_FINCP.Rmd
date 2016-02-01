@@ -1,7 +1,7 @@
 ---
 title: "Draft Analysis for Married Family & Family Income"
-author: "Yicheng Wang"
-date: "Saturday, January 30, 2016"
+author: "Yicheng Wang, Arnold Lau"
+date: "January 31, 2016"
 output:
   html_document:
     fig_width: 8
@@ -11,166 +11,161 @@ output:
     toc: yes
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
 # Preparation
-````{r,message=FALSE}
+```{r, message=FALSE}
+library("survey")
 library("dplyr")
 library("data.table")
 library("ggplot2")
 library("choroplethr")
-````
+library("choroplethrMaps")
+```
 
-# Reading data
-````{r,message=FALSE}
-readIn = function(reRead, colsToKeep, pathA, pathB){
-  if(reRead == TRUE){
-    popDataA = fread(pathA, select = colsToKeep)
-    popDataB = fread(pathB, select = colsToKeep)
-    popData1 = rbind(popDataA, popDataB)
-    rm(popDataA, popDataB)
-    save(popData1, file = "popData1.RData")
-  }else{
-    load("popData1.RData")
-  }
-  return(popData1)
-}
+```{r}
+source("../lib/readIn.R")
+hus <- readIn_house(TRUE, pathA = "../../ss13husa.csv", pathB = "../../ss13husb.csv", save = FALSE)
+weights <- select(hus, WGTP)
+repweights <- select(hus, starts_with("wgtp"), -WGTP)
+# Specify the sampling design structure using the replicate weights
+design <- svrepdesign(data = hus, repweights = repweights, weights = weights, type = "BRR", 
+                      combined.weights = TRUE)
+rm(weights, repweights)
+```
 
-data1 <- readIn(T,c("ST","FES","FINCP"),"/Users/cheeseloveicecream/Documents/columbia/W4249/ss13husa.csv","/Users/cheeseloveicecream/Documents/columbia/W4249/ss13husb.csv")
-````
+There are a total of 1,476,313 households in the dataset. In this analysis we focus on a subset of the households via the variable __FES__ (Family Type and Employment Status), looking only at married-couple families.  
 
-## Data Manipulation &Format
-````{r}
-data1 <- tbl_df(data1)
-ds <-   data1	%>%
-		na.omit()	%>%
-		filter(FES	%in%	c(1,2,3,4))	%>%
-		group_by(FES)
-rm(data1)
-````
+```{r}
+table(hus$FES, useNA = "ifany")
+sum(table(hus$FES)[1:4])
+```
 
-# Visuliazation
-````{r,message=F}
+There are 666,947 missing values in __FES__ in the sample, and our subset will have 617,090 families. We can also get an estimate of the total number of households this represents in the entire U.S:
+
+```{r}
+hus$FES_CAT <- as.factor(hus$FES)
+# Get the population estimate for the total number of households by FES
+fes_popest <- as.data.frame(svytotal(~hus$FES_CAT, design = design, na.rm = TRUE))
+fes_popest <- cbind(fes_popest, FES = c(1:8))
+fes_popest
+```
+
+```{r}
+hus <- tbl_df(hus)
+hus_subset <- hus %>% select(FES, FES_CAT, FINCP, ST) %>% filter(FES %in% c(1:4)) %>% group_by(FES)
+hus_subset$FES_CAT <- droplevels(hus_subset$FES_CAT)
+```
+
+# Visualization
+```{r, message=F}
 fescode <- "FES,MarriedFamilyEmployType
-1,Both in Labor Force
-2,Husband in Labor Force
-3,Wife in Labor Force
-4,Neither in Labor Force"
+              1,Both in Labor Force
+              2,Husband in Labor Force
+              3,Wife in Labor Force
+              4,Neither in Labor Force"
 fescodes <- fread(fescode)
 
-fesnumbers <- summarise(ds,count=n())
+fesnumbers <- summarise(hus_subset,count=n())
 fesnumbers <- left_join(fesnumbers,fescodes,by.x=c("FES"))
+fesnumbers <- left_join(fesnumbers, fes_popest, by.x = c("FES"))
+fesnumbers <- mutate(fesnumbers, samp_percent = (count / sum(fesnumbers$count)) * 100, 
+                                 pop_percent = (total / sum(fesnumbers$total)) * 100)
 Types <- factor(fesnumbers$MarriedFamilyEmployType,levels=unique(fesnumbers$MarriedFamilyEmployType))
-````
-## Exploraring the basic statistics
-````{r}
-ggplot(fesnumbers, aes(x= Types , y=fesnumbers$count, fill= Types)) +                        
-     geom_bar(stat="identity") + scale_fill_hue(l=50) +
-     ylab("Num of People") + 
-     xlab("Employment Status") + ggtitle("Comparing Enployment status of Married Family in the US") +
-     theme(axis.text.x = element_text(angle = 10, hjust = 0.5),
-     panel.background = element_rect(fill = 'white' ))
-````
-````{r}
-summary(ds$FINCP)
-````
-The median family income is 77000 dollars. We use this as bench line. We want to see the percentage under each type of family who has family income more than 77000 which is approxiamatly middle class.
-````{r,message=F}
-medianper <- ds	%>%
-			filter(FINCP>=77000)		%>%
-			group_by(FES)	%>%
-			summarise(count	=	n())		%>%
-			mutate(Percent	=	count/fesnumbers$count*100)
-````
-````{r,message=TRUE}
-ggplot(medianper, aes(x= Types , y=medianper$Percent, fill= Types)) +                        
-       geom_bar(stat="identity") + scale_fill_hue(l=80) +
-       ylab("Percent %") + 
-       xlab("Employment Status") + ggtitle("Percentages of different Employment Status")+
-       theme(axis.text.x = element_text(angle = 10, hjust = 0.5),
-       panel.background = element_rect(fill = 'white' ))
-````
-We can see an interesting result comparing to the previous one that the married family with only wife in the labor force has absolute less numbers of people than the family who has only husband in the labor force, while showing almost the same percentage with more than 77000 family income. This could be investigated later.
-````{r,echo=FALSE}
-stateCodeCSV = "ST,region
-001,alabama
-002,alaska
-004,arizona
-005,arkansas
-006,california
-008,colorado
-009,connecticut
-010,delaware
-011,district of columbia
-012,florida
-013,georgia
-015,hawaii
-016,idaho
-017,illinois
-018,indiana
-019,iowa
-020,kansas
-021,kentucky
-022,louisiana
-023,maine
-024,maryland
-025,massachusetts
-026,michigan
-027,minnesota
-028,mississippi
-029,missouri
-030,montana
-031,nebraska
-032,nevada
-033,new hampshire
-034,new jersey
-035,new mexico
-036,new york
-037,north carolina
-038,north dakota
-039,ohio
-040,oklahoma
-041,oregon
-042,pennsylvania
-044,rhode island
-045,south carolina
-046,south dakota
-047,tennessee
-048,texas
-049,utah
-050,vermont
-051,virginia
-053,washington
-054,west virginia
-055,wisconsin
-056,wyoming"
-stateCodes <- fread(stateCodeCSV)
-````
+```
 
+## Descriptive Statistics
 
-##Mapping Tool
-This map shows percentage of family which neither of the member is in the labor force while having more than 121200 dollars (3rd quantile) family income. 
-````{r}
+```{r}
+options(scipen = 999) # display digits instead of scientific notation
+ggplot(fesnumbers, aes(x = Types, y = fesnumbers$pop_percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       ylab("% of Households") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Households in the US") +
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10))
+```
 
-stateTotalBoth <- ds	%>%
-				  filter(FES==4)		%>%
-				  group_by(ST)	%>%
-				  summarise(count=n())
-				  
+Looking at estimated population percentages for family type and employment status among married couples, we see that just over 50% of married-couple households have both husband and wife in the labor force, compared to around 22% with only the husband in the labor force, 8% with only the wife in the labor force, and 18% with neither the husband nor the wife in the labor force, which may indicate retired couples.  
 
-medianBoth <- ds	%>%
-				filter(FES==4,FINCP>= 121200)	%>%
-				group_by(ST)		%>%
-				summarise(count=n())
-								  
-medianBoth <- right_join(medianBoth,stateCodes,by.x=c("ST"))
+```{r}
+hus_subset$FINCP_ADJ <- hus_subset$FINCP * 1.007549 # adjusts reported income to 2013 dollars
+summary(hus_subset$FINCP_ADJ)
+```
+
+The median family income in the sample is $77,580. (This is different from household income, where a household might consist of multiple families or multiple unrelated people living together.) Is there a difference in labor force participation between households at or above median income vs. below? Under the unlikely theory that family income has nothing to do with married-couple labor force participation, we would expect the proportion of each category for the "at or above median" vs. "below median" subgroups to be roughly the same as the general proportion.  
+
+```{r,message=F}
+abovemedian <- hus_subset %>% filter(FINCP_ADJ >= 77580) %>% group_by(FES) %>% summarise(count = n())
+abovemedian <- left_join(abovemedian, fescodes, by.x=c("FES"))
+abovemedian <- mutate(abovemedian, percent = (count / sum(abovemedian$count)) * 100)
+
+belowmedian <- hus_subset %>% filter(FINCP_ADJ < 77580) %>% group_by(FES) %>% summarise(count = n())
+belowmedian <- left_join(belowmedian, fescodes, by.x=c("FES"))
+belowmedian <- mutate(belowmedian, percent = (count / sum(belowmedian$count)) * 100)
+```
+
+```{r,message=TRUE}
+ggplot(abovemedian, aes(x = Types, y = abovemedian$percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       geom_segment(aes(x = 0.5, y = fesnumbers$pop_percent[1], 
+                        xend = 1.5, yend = fesnumbers$pop_percent[1])) +
+       geom_segment(aes(x = 1.5, y = fesnumbers$pop_percent[2], 
+                        xend = 2.5, yend = fesnumbers$pop_percent[2])) +
+       geom_segment(aes(x = 2.5, y = fesnumbers$pop_percent[3], 
+                        xend = 3.5, yend = fesnumbers$pop_percent[3])) +
+       geom_segment(aes(x = 3.5, y = fesnumbers$pop_percent[4], 
+                        xend = 4.5, yend = fesnumbers$pop_percent[4])) +
+       ylab("Percentage") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Families above Median Income")+
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10)) +
+       annotate("text", x = 3.5, y = 50, label = "Black lines indicate percentages over") +
+       annotate("text", x = 3.5, y = 47, label = "all married-couple families")
+
+ggplot(belowmedian, aes(x = Types , y = belowmedian$percent, fill = Types)) +                        
+       geom_bar(stat="identity") + scale_fill_hue(l=50, h.start = 80) +
+       geom_segment(aes(x = 0.5, y = fesnumbers$pop_percent[1], 
+                        xend = 1.5, yend = fesnumbers$pop_percent[1])) +
+       geom_segment(aes(x = 1.5, y = fesnumbers$pop_percent[2], 
+                        xend = 2.5, yend = fesnumbers$pop_percent[2])) +
+       geom_segment(aes(x = 2.5, y = fesnumbers$pop_percent[3], 
+                        xend = 3.5, yend = fesnumbers$pop_percent[3])) +
+       geom_segment(aes(x = 3.5, y = fesnumbers$pop_percent[4], 
+                        xend = 4.5, yend = fesnumbers$pop_percent[4])) +
+       ylab("Percentage") + 
+       xlab("Labor Force Participation") + 
+       ggtitle("Labor Force Participation of Married-Couple Families below Median Income")+
+       theme(axis.text.x = element_text(angle = 8, hjust = 0.5),
+       panel.background = element_rect(fill = 'white')) +
+       scale_y_discrete(breaks = seq(0, 100, 10)) +
+       annotate("text", x = 3, y = 42, label = "Black lines indicate percentages over") +
+       annotate("text", x = 3, y = 39, label = "all married-couple families")
+```
+
+Comparing married-couple households at or above median income and married-couple households below median income, it appears that the biggest differences are in two-income vs no-income families. The percentage of single-earner families appears to be roughly the same in both groups, while there is a greater percentage of two-income families earning above median income and a greater percentage of no-income families earning below median income.  
+
+```{r}
+statenames <- read.csv("../data/statenames.csv", strip.white = TRUE)
+statenames <- rename(statenames, ST = code)
+```
+
+## Choropleth Map  
+This map shows percentage of family which neither of the member is in the labor force while having more than $122100 (3rd quantile) family income. 
+```{r}
+stateTotalBoth <- hus_subset %>% filter(FES==4) %>% group_by(ST) %>% summarise(count=n())
+medianBoth <- hus_subset %>% filter(FES==4, FINCP>= 122100)	%>% group_by(ST) %>%	summarise(count=n())
+medianBoth <- left_join(medianBoth, statenames)
 medianBoth[is.na(medianBoth)] <- 0
 medianBoth <- mutate(medianBoth,value=medianBoth$count/stateTotalBoth$count*100)
-
-state_choropleth(medianBoth,title="Percentage of Neither People in labor earning more than 121200",num_colors=3	)
-````
+medianBoth <- rename(medianBoth, region = name)
+medianBoth$region <- tolower(medianBoth$region)
+state_choropleth(medianBoth,
+         title = "% Married-Couple Families with Neither in Labor Force Earning > $122,100", 
+         num_colors = 3)
+```
 
 
 
