@@ -32,7 +32,7 @@ hus <- rbind(husa,husb) #This is a list
 hus <- as.data.frame(hus) #Transform a list to a data frame
 
 #getting the data frame from population data
-colsToKeep<-c("ST","SCHL","WAGP","AGEP","INDP","SERIALNO","SEX","PINCP","PWGTP")
+colsToKeep<-c("ST","SCHL","WAGP","AGEP","INDP","SERIALNO","SEX","PINCP","PWGTP","MAR")
 
 pusa <- fread("ss13pusa.csv", select=colsToKeep)
 pusb <- fread("ss13pusb.csv", select=colsToKeep)
@@ -69,8 +69,8 @@ hp$INDP2[hp$INDP==9920]<-"UNEMPLOYED OR NEVER WORKED"
 
 # 
 #                                       
-# saveRDS(hp, file="hp.RDS")
-# save(hp,file="hp.Rdata")
+ saveRDS(hp, file="hp.RDS")
+ save(hp,file="hp.Rdata")
 # 
 # #####save the file
 # save(pus, file="pus_selected_cols.RData")
