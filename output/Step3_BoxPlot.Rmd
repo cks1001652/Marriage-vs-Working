@@ -105,7 +105,7 @@ p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=FES))+geom_boxplot(mapping = NU
 p
 ```
 
-![first](../cycle1-7/output/Screen Shot 2016-02-02 at 3.43.58 AM.jpg)
+![first](../output/cycle1-7/output/Screen Shot 2016-02-02 at 3.43.58 AM.jpg)
 2. Education Level(SCHL)
 
 ```{r}
@@ -195,4 +195,4 @@ p
 
 ```
 
-![INDP](../cycle1-7/output/Screen Shot 2016-02-02 at 4.05.18 AM.jpg)
+![INDP](../output/cycle1-7/output/Screen Shot 2016-02-02 at 4.05.18 AM.jpg)
