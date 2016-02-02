@@ -196,3 +196,5 @@ p
 ```
 
 ![INDP](../output/Screen Shot 2016-02-02 at 4.05.18 AM.jpg)
+
+The plots' results look interesting, which leads to some new discoveries, and I think there must me some other facets that we can try to explore the FES and FINCP's relationship.
