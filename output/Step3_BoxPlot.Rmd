@@ -170,7 +170,7 @@ p
 ![Output](../output/Screen Shot 2016-02-02 at 2.51.23 AM.jpg)
 
 
-3. Industry
+3.Industry
 ```{r}
 FINCP_FES23<-hp %>%
              filter(FES %in% c(2,3)) %>%
