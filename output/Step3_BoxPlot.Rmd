@@ -86,7 +86,7 @@ hp <-tbl_df(hp)
 hp<-na.omit(hp)
 ```
 
-##Now we draw several boxplots to make comparion between the family income(FINCP) FES=2 and FES=3
+##Now we draw several boxplots to make comparion between the family income(FINCP) and FES=2 and FES=3
 
 1. Primary comparison
 ```{r}
