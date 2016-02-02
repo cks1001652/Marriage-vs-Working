@@ -9,6 +9,7 @@ library(mapproj)
 library(dplyr)
 library(gridExtra)
 library(ggplot2)
+library(cowplot)
 library(RColorBrewer)
 library(choroplethr)
 library(choroplethrMaps)
@@ -33,11 +34,33 @@ total_count <- rep(hp_fes1to4_state_total$total_count, each = 4)
 hp_fes1to4_state <- cbind(hp_fes1to4_state, total_count)
 hp_fes1to4_state <- tbl_df(hp_fes1to4_state)
 hp_fes1to4_state <- mutate(hp_fes1to4_state, value = FES_count / total_count)
-
+hp_fes1to4_state$region <- tolower(hp_fes1to4_state$region)
+hp_fes1to4_state$value <- 100 * hp_fes1to4_state$value
 hp_fes1_state <- filter(hp_fes1to4_state, FES == 1)
 hp_fes2_state <- filter(hp_fes1to4_state, FES == 2)
 hp_fes3_state <- filter(hp_fes1to4_state, FES == 3)
 hp_fes4_state <- filter(hp_fes1to4_state, FES == 4)
+continental_regions <- hp_fes1_state$region[-c(2, 12)]
 ```
 
 ```{r}
+map2 <- state_choropleth(hp_fes2_state, title = "Only Husband in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map2 <- map2 + scale_fill_brewer(type = "seq", palette = "Blues", name = "Percentage")
+map2 <- map2 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map3 <- state_choropleth(hp_fes3_state, title = "Only Wife in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map3 <- map3 + scale_fill_brewer(type = "seq", palette = "Reds", name = "Percentage")
+map3 <- map3 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map1 <- state_choropleth(hp_fes1_state, title = "Husband and Wife in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map1 <- map1 + scale_fill_brewer(type = "seq", palette = "Purples", name = "Percentage")
+map1 <- map1 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map4 <- state_choropleth(hp_fes4_state, title = "Neither in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map4 <- map4 + scale_fill_grey(start = 0.8, end = 0.2, name = "Percentage")
+map4 <- map4 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map1to4 <- grid.arrange(map2, map3, map1, map4, ncol = 2, nrow = 2)
+save_plot("../figs/FES_map.pdf", map1to4, ncol = 2, nrow = 2, base_aspect_ratio = 2)
+```
+
