@@ -83,10 +83,29 @@ hp$INDP2[hp$INDP==9920]<-"UNEMPLOYED AND LAST WORKED 5 YEARS AGO OR EARLIER OR N
 ```{r}
 hp<-readRDS("hp.RDS")
 hp <-tbl_df(hp)
+hp<-na.omit(hp)
 ```
 
+##Now we draw several boxplots to make comparion between the family income(FINCP) FES=2 and FES=3
 
-##Next part is where we draw a box plot to show the distribution of FINCP in terms of education level, both under FES=2 and FES=3
+1. Primary comparison
+```{r}
+FINCP_FES23<-hp %>%
+             filter(FES %in% c(2,3)) %>%
+             select(FES,FINCP)
+             
+FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
+```
+```{r}
+p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=FINCP))+geom_boxplot(mapping = NULL, 
+     data = NU
+     LL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+     outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+     ggtitle("FINCP distribution under FES=2 and FES=3")
+
+p
+```
+2. Education Level(SCHL)
 
 ```{r}
 
@@ -119,7 +138,6 @@ SCHLcode<-"SCHL,EDU
 
 SCHLcode <- fread(SCHLcode)
 hp<-left_join(hp, SCHLcode)
-hp<-na.omit(hp)
 
 FINCP_FES23<-hp %>%
              filter(FES %in% c(2,3)) %>%
@@ -131,6 +149,7 @@ FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
 FINCP_FES23$EDU <- as.factor(FINCP_FES23$EDU)
 ```
 
+###Next part is where we draw a box plot to show the distribution of FINCP in terms of education level, both under FES=2 and FES=3
 ###Use ggplot2 to make a ~~3 dimensional~~ box plot.
 
 ```{r}
@@ -145,3 +164,26 @@ p
 ```
 
 ![Output](../output/Screen Shot 2016-02-02 at 2.51.23 AM.jpg)
+
+
+3. Industry
+```{r}
+FINCP_FES23<-hp %>%
+             filter(FES %in% c(2,3)) %>%
+             select(FES,FINCP,INDP2) 
+
+#set
+FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
+FINCP_FES23$INDP2 <- as.factor(FINCP_FES23$INDP2)
+```
+
+```{r}
+
+p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=INDP))+geom_boxplot(mapping = NULL, 
+     data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+     outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+     ggtitle("FINCP distribution in terms of INDP under FES=2 and FES=3")
+
+p
+
+```
