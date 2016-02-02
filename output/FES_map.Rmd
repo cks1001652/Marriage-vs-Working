@@ -5,9 +5,12 @@ date: "February 1, 2016"
 output: html_document
 ---
 ```{r}
+library(mapproj)
 library(dplyr)
-library(rgdal)
+library(gridExtra)
 library(ggplot2)
+library(RColorBrewer)
+devtools::source_gist("33baa3a79c5cfef0f6df")
 ```
 
 ```{r}
@@ -24,10 +27,9 @@ hp_fes1to3$FES_recode[hp_fes1to3$FES == 1] <- 0
 hp_fes1to3$FES_recode[hp_fes1to3$FES == 2] <- -1
 hp_fes1to3$FES_recode[hp_fes1to3$FES == 3] <- 1
 
-hp_fes1to3_state <- hp_fes1to3 %>% group_by(ST_name) %>% 
+hp_fes1to3_state <- hp_fes1to3 %>% group_by(ST, ST_name) %>% 
                     summarise(FES_mean = mean(FES_recode, na.rm = TRUE)) %>% 
                     arrange(FES_mean)
+hp_fes1to3_state$id <- as.factor(hp_fes1to3_state$ST)
 ```
 
-```{r}
-map <- readOGR("../data/us.json", "states")
