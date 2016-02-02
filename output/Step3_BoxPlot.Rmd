@@ -123,16 +123,13 @@ SCHLcode<-"SCHL,EDU
 "
 
 SCHLcode <- fread(SCHLcode)
-
-
 hp<-left_join(hp, SCHLcode)
-
 hp<-na.omit(hp)
 
 FINCP_FES23<-hp %>%
-  filter(FES %in% c(2,3)) %>%
-  select(FES,FINCP,EDU,SCHL) %>%
-  arrange(SCHL)
+             filter(FES %in% c(2,3)) %>%
+             select(FES,FINCP,EDU,SCHL) %>%
+             arrange(SCHL)
 
 #set
 FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
