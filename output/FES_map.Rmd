@@ -25,11 +25,18 @@ hp_fes1to4 <- select(hp, SERIALNO, WGTP, FES, ST_name, ST_abbr) %>%
               filter(FES >= 1 & FES <= 4) %>% 
               distinct(SERIALNO)
 hp_fes1to4_wgtp <- expandRows(hp_fes1to4, "WGTP")
-
 hp_fes1to4_state <- hp_fes1to4_wgtp %>% group_by(ST_name, FES) %>% 
                     summarise(value = n()) %>% rename(region = ST_name)
 hp_fes1to4_state_total <- hp_fes1to4_state %>% group_by(region) %>%
                           summarise(total_value = sum(value))
+total_value <- rep(hp_fes1to4_state_total$total_value, each = 4)
+hp_fes1to4_state <- cbind(hp_fes1to4_state, total_value)
+hp_fes1to4_state <- tbl_df(hp_fes1to4_state)
+hp_fes1to4_state <- mutate(hp_fes1to4_state, FES_prop = value / total_value)
 
+hp_fes1_state <- filter(hp_fes1to4_state, FES == 1)
+hp_fes2_state <- filter(hp_fes1to4_state, FES == 2)
+hp_fes3_state <- filter(hp_fes1to4_state, FES == 3)
+hp_fes4_state <- filter(hp_fes1to4_state, FES == 4)
 ```
 
