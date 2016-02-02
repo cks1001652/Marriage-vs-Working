@@ -82,11 +82,6 @@ hp$INDP2[hp$INDP==9920]<-"UNEMPLOYED AND LAST WORKED 5 YEARS AGO OR EARLIER OR N
 
 ```{r}
 hp<-readRDS("hp.RDS")
-```
-
-###subset the data according to the variables we're focusing on 
-###caluculate the sum of married people and single people
-```{r}
 hp <-tbl_df(hp)
 ```
 
