@@ -20,7 +20,7 @@ library("choroplethrMaps")
 
 
 
-###getting the data frame from household data
+###Getting the data frame from household data
 
 ```{r}
 colsToKeep<-c("ST","FINCP","HINCP","FES","SERIALNO","WGTP")
@@ -64,7 +64,7 @@ hp$INDP2[hp$INDP>=8560 & hp$INDP<=8690]<-"ENT"
 hp$INDP2[hp$INDP>=8770 & hp$INDP<=9290]<-"SRV"
 hp$INDP2[hp$INDP>=9370 & hp$INDP<=9590]<-"ADM"
 hp$INDP2[hp$INDP>=9670 & hp$INDP<=9870]<-"MIL"
-hp$INDP2[hp$INDP==9920]<-"UNEMPLOYED AND LAST WORKED 5 YEARS AGO OR EARLIER OR NEVER WORKED"
+hp$INDP2[hp$INDP==9920]<-"UNEMPLOYED OR NEVER WORKED"
 
 
 # 
@@ -97,14 +97,15 @@ FINCP_FES23<-hp %>%
 FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
 ```
 ```{r}
-p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=FINCP))+geom_boxplot(mapping = NULL, 
-     data = NU
-     LL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=FES))+geom_boxplot(mapping = NULL, 
+     data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
      outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
-     ggtitle("FINCP distribution under FES=2 and FES=3")
+     ggtitle("FINCP distribution under FES=2 and FES=3")+scale_fill_discrete(name="Family type and employment status  \n(FES)")+theme(legend.title = element_text(size=16, face="bold"))
 
 p
 ```
+
+![first](../output/Screen Shot 2016-02-02 at 3.43.58 AM.jpg)
 2. Education Level(SCHL)
 
 ```{r}
@@ -137,6 +138,8 @@ SCHLcode<-"SCHL,EDU
 "
 
 SCHLcode <- fread(SCHLcode)
+#remember the order of the education so that the the plot will also be drawn in this order
+order <- SCHLcode$EDU
 hp<-left_join(hp, SCHLcode)
 
 FINCP_FES23<-hp %>%
@@ -157,7 +160,8 @@ FINCP_FES23$EDU <- as.factor(FINCP_FES23$EDU)
 p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=EDU))+geom_boxplot(mapping = NULL, 
      data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
      outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
-     ggtitle("FINCP distribution in terms of education under FES=2 and FES=3")
+     ggtitle("FINCP distribution in terms of education under FES=2 and
+             FES=3")
 
 p
 
@@ -166,7 +170,7 @@ p
 ![Output](../output/Screen Shot 2016-02-02 at 2.51.23 AM.jpg)
 
 
-3. Industry
+3.Industry
 ```{r}
 FINCP_FES23<-hp %>%
              filter(FES %in% c(2,3)) %>%
@@ -177,9 +181,12 @@ FINCP_FES23$FES <- as.factor(FINCP_FES23$FES)
 FINCP_FES23$INDP2 <- as.factor(FINCP_FES23$INDP2)
 ```
 
+
+
+
 ```{r}
 
-p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=INDP))+geom_boxplot(mapping = NULL, 
+p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=INDP2))+geom_boxplot(mapping = NULL, 
      data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
      outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
      ggtitle("FINCP distribution in terms of INDP under FES=2 and FES=3")
@@ -187,3 +194,5 @@ p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=INDP))+geom_boxplot(mapping = N
 p
 
 ```
+
+![INDP](../output/Screen Shot 2016-02-02 at 4.05.18 AM.jpg)
