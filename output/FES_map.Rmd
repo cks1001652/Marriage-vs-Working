@@ -1,0 +1,35 @@
+---
+title: "FES map"
+author: "Group 7"
+date: "February 1, 2016"
+output: html_document
+---
+```{r}
+library(mapproj)
+library(dplyr)
+library(gridExtra)
+library(ggplot2)
+library(RColorBrewer)
+devtools::source_gist("33baa3a79c5cfef0f6df")
+```
+
+```{r}
+statenames <- read.csv("../data/statenames.csv", strip.white = TRUE)
+statenames <- rename(statenames, ST = code, ST_name = name, ST_abbr = abbr)
+hp <- readRDS("../data/hp.RDS")
+hp <- tbl_df(hp)
+hp <- left_join(hp, statenames)
+hp_fes1to3 <- filter(hp, FES >= 1 & FES <= 3)
+hp_fes1to3 <- mutate(hp_fes1to3, FES_recode = NA)
+# Recode FES variable to -1 if only male in labor force, 0 if both in labor force, 
+# 1 if only female (among married-couple families)
+hp_fes1to3$FES_recode[hp_fes1to3$FES == 1] <- 0
+hp_fes1to3$FES_recode[hp_fes1to3$FES == 2] <- -1
+hp_fes1to3$FES_recode[hp_fes1to3$FES == 3] <- 1
+
+hp_fes1to3_state <- hp_fes1to3 %>% group_by(ST, ST_name) %>% 
+                    summarise(FES_mean = mean(FES_recode, na.rm = TRUE)) %>% 
+                    arrange(FES_mean)
+hp_fes1to3_state$id <- as.factor(hp_fes1to3_state$ST)
+```
+
