@@ -137,7 +137,8 @@ FINCP_FES23$EDU <- as.factor(FINCP_FES23$EDU)
 
 p <- ggplot(FINCP_FES23, aes(x=FES, y=FINCP,fill=EDU))+geom_boxplot(mapping = NULL, 
      data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
-     outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+ggtitle("FINCP distribution in terms of education under FES=2 and FES=3")
+     outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+     ggtitle("FINCP distribution in terms of education under FES=2 and FES=3")
 
 p
 
