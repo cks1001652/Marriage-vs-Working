@@ -1,6 +1,6 @@
 ---
-title: "Married-Couple Families and Labor Force Participation in the 2013 ACS"
-author: "Group 7"
+title: "The Working Lives of Married Families"
+author: "Yicheng Wang, Ao Liu, Arnold Lau, Yanyu Zheng"
 date: "February 3, 2016"
 output: html_document
 ---
@@ -36,7 +36,7 @@ sum(table(hp$FES)[1:4])
 
 There are 759,782 missing values in __FES__ in the sample, and our subset will have 1,896,480 people (617,090 families). In our subset, __FES__ has four categories:  
 1. Married-couple family, both husband and wife in the labor force  
-2. Married-couple family, only husband in the labor force
+2. Married-couple family, only husband in the labor force  
 3. Married-couple family, only wife in the labor force  
 4. Married-couple family, neither husband nor wife in the labor force  
 
@@ -52,8 +52,11 @@ hp <- left_join(hp, statenames)
 hp_fes1to4_wgtp <- select(hp, SERIALNO, WGTP, FES, ST_name, FINCP, MAR, SEX, INDP2, SCHL) %>% 
               filter(FES >= 1 & FES <= 4) %>% 
               distinct(SERIALNO)
+hp_fes1to4_wgtp$FINCP <- hp_fes1to4_wgtp$FINCP * 1.007549 # adjust to 2013 dollars
 hp_fes1to4_pwgtp <- select(hp, PWGTP, FES, FINCP, PINCP, MAR, SEX, INDP2, SCHL) %>% 
               filter(FES >= 1 & FES <= 4)
+hp_fes1to4_pwgtp$FINCP <- hp_fes1to4_pwgtp$FINCP * 1.007549
+hp_fes1to4_pwgtp$PINCP <- hp_fes1to4_pwgtp$PINCP * 1.007549
 rm(hp)
 ```
 
@@ -217,7 +220,27 @@ The top 5 common industries among husbands alone in the labor force: manufacturi
 
 The top 5 common industries among wives alone in the labor force: medicine, education, professional services, finance and manufacturing.  
 
-## Distribution by state of types of married-couple families  
+## Distribution of types of married-couple families  
+
+Then, we look at the proportion of different types of married-couple families over all married-couple families:
+![bar_1](bar_1.png)  
+
+Does this proportion differ for married-couple families at or above median income ($77,000), versus below median income? 
+![bar_abovebelow](bar_abovebelow.png)  
+
+As we can see, above median income, there are many more married-couple families with both in the labor force, while below median income, there are many more married-couple families with only one person or none in the labor force. This isn't surprising when you think about it, but it also doesn't necessarily mean that being in the labor force is a family's only source of income, as we'll see later.  
+
+```{r echo = FALSE}
+source("../lib/pieChart.R")
+FINCP_WT <- expandRows(hp_fes1to4_wgtp, "WGTP")
+fesnumbers <- count(FINCP_WT, FES)
+fesnumbers <- mutate(fesnumbers, pop_percent = n / sum(fesnumbers$n) * 100)
+abovemedian <- filter(FINCP_WT, FINCP >= median(FINCP_WT$FINCP)) %>% count(FES)
+abovemedian <- mutate(abovemedian, percent = n / sum(abovemedian$n) * 100)
+belowmedian <- filter(FINCP_WT, FINCP < median(FINCP_WT$FINCP)) %>% count(FES)
+belowmedian <- mutate(belowmedian, percent = n / sum(belowmedian$n) * 100)
+pieChart(abovemedian$percent, fesnumbers$pop_percent, belowmedian$percent)
+```
 
 Next, we look at the distribution of different types of married-couple families across the continental United States. Do certain states or groups of states have greater proportions of families with both husband and wife in the labor force, as opposed to only one of them or neither of them?  
 
@@ -299,7 +322,6 @@ up1 <- ggplot(PINCP_FES2, aes(x=1,y=PINCP_FES2$PINCP)) +
 ```
 
 ```{r,echo=FALSE, eval = FALSE, message=FALSE}
-
 
 middle <- ggplot(PINCP_FES3, aes(PINCP_FES3$PINCP)) +
   geom_histogram(bins=100,fill="#56B4E9")+
