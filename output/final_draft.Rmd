@@ -1,0 +1,254 @@
+---
+title: "Final draft"
+output: html_document
+---
+# Load libraries
+
+```{r, message=FALSE}
+library("dplyr")
+library("data.table")
+library("ggplot2")
+library("choroplethr")
+library("choroplethrMaps")
+library("mapproj")
+library("gridExtra")
+library("RColorBrewer")
+library("splitstackshape")
+library("cowplot")
+source("../lib/state_choropleth_wl.R")
+```
+
+# Read in the data
+```{r}
+hp <- readRDS("../data/hp.RDS")
+```
+
+There are a total of 1,476,313 households and 3,249,588 people in the dataset. In this analysis we focus on a subset of the households via the variable __FES__ (Family Type and Employment Status), looking only at married-couple families.
+
+```{r}
+table(hp$FES, useNA = "ifany")
+sum(table(hp$FES)[1:4])
+```
+
+There are 759,782 missing values in __FES__ in the sample, and our subset will have 1,896,480 people (617,090 families).
+
+```{r}
+statenames <- read.csv("../data/statenames.csv", strip.white = TRUE)
+statenames <- rename(statenames, ST = code, ST_name = name, ST_abbr = abbr)
+hp <- tbl_df(hp)
+hp <- left_join(hp, statenames)
+```
+
+We create two separate weighted datasets for households and individuals, filtering them by __FES__ >= 1 & __FES__ <= 4.  
+```{r}
+hp_fes1to4 <- select(hp, SERIALNO, WGTP, FES, ST_name, FINCP, MAR, SEX, INDP2, SCHL) %>% 
+              filter(FES >= 1 & FES <= 4) %>% 
+              distinct(SERIALNO)
+hp_fes1to4_wgtp <- expandRows(hp_fes1to4, "WGTP")
+hp_fes1to4_pwgtp <- select(hp, SERIALNO, PWGTP, FES, FINCP, PINCP, MAR, SEX, INDP2, SCHL) %>% filter(FES >= 1 & FES <= 4)
+hp_fes1to4_pwgtp <- expandRows(hp_fes1to4_pwgtp, "PWGTP")
+```
+
+```{r}
+FINCP_FES2<-hp_fes1to4_wgtp %>%
+  filter(FES == 2, MAR == 1)
+
+FINCP_FES3<-hp_fes1to4_wgtp %>%
+  filter(FES == 3, MAR == 1)
+
+FINCP_FES2$FES <- as.factor(FINCP_FES2$FES)
+FINCP_FES3$FES <- as.factor(FINCP_FES3$FES)
+```
+
+```{r}
+plot1 <- ggplot(FINCP_FES2, aes(x=FES, y=FINCP,fill=FES))+geom_boxplot()+coord_flip()+
+  ggtitle("FINCP distribution under FES=2")+scale_fill_manual(values="#56B4E9")
+
+plot3 <- ggplot(FINCP_FES2, aes(FINCP,fill=FES)) + geom_histogram()+theme(axis.text.y=element_text(angle = 90), axis.title.y=element_text(angle = 90))+scale_fill_manual(values="#56B4E9")
+
+
+plot2 <- ggplot(FINCP_FES3, aes(x=FES, y=FINCP,fill=FES))+geom_boxplot()+coord_flip()+
+  ggtitle("FINCP distribution under FES=3")+scale_fill_brewer(palette="Set1")
+
+plot4 <- ggplot(FINCP_FES3, aes(FINCP,fill=FES)) + geom_histogram()+theme(axis.text.y=element_text(angle = 90), axis.title.y=element_text(angle = 90))+scale_fill_manual(values=c("green"))+scale_fill_brewer(palette="Set1")
+
+
+grid.arrange(plot1, plot2, plot3, plot4, ncol=2, nrow=2, widths=c(1,1),heights=c(1, 3))
+```
+
+```{r}
+SCHLcode<-"SCHL,EDU
+01,No schooling completed
+02,Nursery school preschool   
+03,Kindergarten
+04,Grade 1
+05,Grade 2
+06,Grade 3        
+07,Grade 4
+08,Grade 5
+09,Grade 6
+10,Grade 7        
+11,Grade 8  
+12,Grade 9
+13,Grade 10
+14,Grade 11        
+15,12th grade no diploma   
+16,Regular high school diploma
+17,GED or alternative credential
+18,Some college but less than 1 year
+19,1 or more years of college credit no degree
+20,Associate's degree     
+21,Bachelor's degree
+22,Master's degree
+23,Professional degree
+24,Doctorate degree
+"
+
+SCHLcode <- fread(SCHLcode)
+#remember the order of the education so that the the plot will also be drawn in this order
+order <- SCHLcode$EDU
+hp_fes1to4_pwgtp <-left_join(hp_fes1to4_pwgtp, SCHLcode)
+
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL<=3]<-"01.Kindergarten"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL>3 & hp_fes1to4_pwgtp$SCHL<9]<-"02.Primary School"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL>8 & hp_fes1to4_pwgtp$SCHL<16]<-"03.Middle School"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL>15 & hp_fes1to4_pwgtp$SCHL<21]<- "04.High School"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL == 21]<- "05.Bachelor's degree"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL == 22]<- "06.Master's degree"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL == 23]<- "07.Professional degree"
+hp_fes1to4_pwgtp$EDU[hp_fes1to4_pwgtp$SCHL == 24]<- "08.Doctorate degree"
+
+FINCP_FES2<- hp_fes1to4_pwgtp %>%
+  filter(FES == 2, MAR == 1, SEX == 1) %>%  
+  arrange(SCHL)
+FINCP_FES3<- hp_fes1to4_pwgtp %>%
+  filter(FES == 3, MAR == 1, SEX == 2) %>%  
+  arrange(SCHL)
+
+#set
+FINCP_FES2$FES <- as.factor(FINCP_FES2$FES)
+FINCP_FES2$EDU <- as.factor(FINCP_FES2$EDU)
+FINCP_FES3$FES <- as.factor(FINCP_FES3$FES)
+FINCP_FES3$EDU <- as.factor(FINCP_FES3$EDU)
+
+left <- ggplot(FINCP_FES2, aes(x=FES, y=FINCP,fill=EDU))+geom_boxplot(mapping = NULL, 
+                                                                      data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+                                                                      outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+  ggtitle("FINCP distribution in terms of education under FES=2")+scale_fill_brewer(palette="Blues")
+
+right <- ggplot(FINCP_FES3, aes(x=FES, y=FINCP,fill=EDU))+geom_boxplot(mapping = NULL, 
+                                                                       data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+                                                                       outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+  ggtitle("FINCP distribution in terms of education under FES=3")+scale_fill_brewer(palette="Reds")
+
+grid.arrange(left,right,ncol=2, nrow=1, widths=c(1, 1))
+```
+From the plot we can see that, under the same level of education, for all the married people, the male labor force tend to have higher family income than female labor force. What's more, under that same degree of education, the family income of the male labor force family tend to be more scattered, and has more outliers, whereas that of the female labor force family tend to be less scattered.
+
+On the other hand, regardless of the sex of the labor force, the trend of the two plots are almost the same: the higher the education is, the higher the familiy income is likely to be. On average, a labor force has the highest family income when he has a professional degree, which is out of our previous expection. The highest degree - the doctorate's degree, are on the contrary less likely to provide the highes family income for families who have only one labor force than the professional degree.
+
+```{r}
+
+#set
+FINCP_FES2$INDP2 <- as.factor(FINCP_FES2$INDP2)
+FINCP_FES3$INDP2 <- as.factor(FINCP_FES3$INDP2)
+levels(FINCP_FES2$INDP2)[17] <- "UNP"
+levels(FINCP_FES3$INDP2)[17] <- "UNP"
+
+cols <- colorRampPalette(brewer.pal(12, "Set3"))
+myPal <- cols(length(levels(FINCP_FES2$INDP2)))
+left <- ggplot(FINCP_FES2, aes(x=FES, y=FINCP,fill=INDP2))+geom_boxplot(mapping = NULL, 
+                                                                        data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+                                                                        outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+  ggtitle("FINCP distribution in terms of INDP under FES=2")+scale_fill_manual(values = myPal)
+
+right <- ggplot(FINCP_FES3, aes(x=FES, y=FINCP,fill=INDP2))+geom_boxplot(mapping = NULL, 
+                                                                         data = NULL, stat = "boxplot", position = "dodge", outlier.colour = "black", 
+                                                                         outlier.shape = 16, outlier.size = 1.5, notch = FALSE, notchwidth = 0.5)+
+  ggtitle("FINCP distribution in terms of INDP under FES=3")+scale_fill_manual(values = myPal)
+
+grid.arrange(left,right,ncol=2, nrow=1, widths=c(1, 1))
+```
+
+```{r}
+hp_fes1to4_state <- hp_fes1to4_wgtp %>% group_by(ST_name, FES) %>% 
+                    summarise(FES_count = n()) %>% rename(region = ST_name)
+hp_fes1to4_state_total <- hp_fes1to4_state %>% group_by(region) %>%
+                          summarise(total_count = sum(FES_count))
+total_count <- rep(hp_fes1to4_state_total$total_count, each = 4)
+hp_fes1to4_state <- cbind(hp_fes1to4_state, total_count)
+hp_fes1to4_state <- tbl_df(hp_fes1to4_state)
+hp_fes1to4_state <- mutate(hp_fes1to4_state, value = FES_count / total_count)
+hp_fes1to4_state$region <- tolower(hp_fes1to4_state$region)
+hp_fes1to4_state$value <- 100 * hp_fes1to4_state$value
+hp_fes1_state <- filter(hp_fes1to4_state, FES == 1)
+hp_fes2_state <- filter(hp_fes1to4_state, FES == 2)
+hp_fes3_state <- filter(hp_fes1to4_state, FES == 3)
+hp_fes4_state <- filter(hp_fes1to4_state, FES == 4)
+continental_regions <- hp_fes1_state$region[-c(2, 12)]
+```
+
+```{r echo = FALSE, message = FALSE, fig.height = 5, fig.width = 8.5}
+map2 <- state_choropleth_wl(hp_fes2_state, title = "Only Husband in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map2 <- map2 + scale_fill_brewer(type = "seq", palette = "Blues", name = "Percentage")
+map2 <- map2 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map3 <- state_choropleth_wl(hp_fes3_state, title = "Only Wife in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map3 <- map3 + scale_fill_brewer(type = "seq", palette = "Reds", name = "Percentage")
+map3 <- map3 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map1 <- state_choropleth_wl(hp_fes1_state, title = "Both in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map1 <- map1 + scale_fill_brewer(type = "seq", palette = "Purples", name = "Percentage")
+map1 <- map1 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map4 <- state_choropleth_wl(hp_fes4_state, title = "Neither in Labor Force",
+                         num_colors = 5, zoom = continental_regions)
+map4 <- map4 + scale_fill_grey(start = 0.8, end = 0.2, name = "Percentage")
+map4 <- map4 + coord_map(projection = "albers", lat0 = 29.5, lat1 = 45.5)
+map1to4 <- grid.arrange(map2, map3, map1, map4, ncol = 2, nrow = 2)
+```
+
+```{r}
+PINCP_FES2 <- hp_fes1to4_pwgtp %>% filter(FES==2 & SEX==2 &MAR==1)
+PINCP_FES2 <- tbl_df(PINCP_FES2)
+
+PINCP_FES3 <- hp_fes1to4_pwgtp %>% filter(FES==3 & SEX==1 & MAR == 1)
+PINCP_FES3 <- tbl_df(PINCP_FES3)
+```
+When we looked into the data carefully, we found that the family income of the family from which has only husband or wife in the labor force (LF) is not exactly coincided with the personal income of the husband or wife who is the LF. This suggests that the spouse of the family who is currently not in the labor force may also have personal income from different access . For example, he or she may gain dividends from the stock markets. 
+```{r,echo=FALSE}
+#Plot the Two Graphs
+middle1 <- ggplot(PINCP_FES2, aes(PINCP_FES2$PINCP)) +
+  geom_histogram(bins=90,fill="red")+
+  labs(x="Personal Income PINCP",y="Counts")+
+  theme(axis.text.y=element_text(angle=90),axis.title.y=element_blank())
+up1 <- ggplot(PINCP_FES2, aes(x=1,y=PINCP_FES2$PINCP)) +
+  geom_boxplot(fill = "red")+
+  labs(title="Personal Income of the Wife From Family with Only husband in the LF")+
+  coord_flip()+
+  theme(axis.text.y=element_text(angle=90),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank()
+  ) 
+grid.arrange(up1,middle1,ncol=1,nrow=2,heights=c(1,4))
+
+```
+
+```{r,echo=FALSE,message=FALSE}
+
+
+middle <- ggplot(FINCP_FES3, aes(FINCP_FES3$PINCP)) +
+  geom_histogram(bins=100,fill="#56B4E9")+
+  labs(x="Personal Income PINCP",y="Counts")+
+  theme(axis.text.y=element_text(angle=90),axis.title.y=element_blank())
+up <- ggplot(FINCP_FES3, aes(x=1,y=FINCP_FES3$PINCP)) +
+  geom_boxplot(fill = "#56B4E9")+
+  labs(title="Personal Income of the Husband From Family with Only Wife in the LF")+
+  coord_flip()+
+  theme(axis.text.y=element_text(angle=90),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank()
+        ) 
+grid.arrange(up,middle,ncol=1,nrow=2,heights=c(1,4))
+```
+These two plots shows the boxplot and distribution of the Personal Income from the family which has only one person in the labor force (LF). We can see that the median of the two plots are generally close to the zero, which is reasonable. Therefore, both distributions are extremely right skewed. The average personal income for male is higher than female. As you can see from the plot, the percentage of males who are making money is greater than the percentage of females. Suprising a certain amount of people who are not in the labor force has a great amout of personal income. An extreme data point will be a woman whole is not in the labor force gains 635000 dollars in a year where her husband who is in the labor force only earns 109000 dollars in a year. If we have more data and background support, further research will be studied on this topic.
