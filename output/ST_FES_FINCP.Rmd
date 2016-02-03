@@ -22,6 +22,7 @@ library("choroplethrMaps")
 ```
 
 ```{r}
+# set working directory to "/output"
 source("../lib/readIn.R")
 hus <- readIn_house(TRUE, pathA = "../../ss13husa.csv", pathB = "../../ss13husb.csv", save = FALSE)
 weights <- select(hus, WGTP)
