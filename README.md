@@ -16,3 +16,9 @@ proj/
 
 Please see each subfolder for a README file.
 
+###Project One
+####Member
+yw2761:Yicheng Wang
+acl2192:Arnold Lau
+al3472: Ao Liu
+yz2690: Yanyu Zhang
